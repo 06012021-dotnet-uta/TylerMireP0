@@ -17,10 +17,21 @@ namespace HackerRankChallengeWeek1_2
 
         public static int diagonalDifference(List<List<int>> arr)
         {
-            for(int x = 0; x < arr.Count; x++)
+            int sumPrimary = 0;
+            int sumSecondary = 0;
+
+            for(int i = 0; i < arr.Count; i++)
             {
-                for(int y )
+                sumPrimary += arr[i][i];
             }
+            
+
+            for(int x = arr.Count - 1; x >= 0; x--)
+            {
+                sumSecondary += arr[x][arr.Count - 1 - x];
+            }
+
+            return Math.Abs(sumPrimary - sumSecondary);
         }
 
     }
