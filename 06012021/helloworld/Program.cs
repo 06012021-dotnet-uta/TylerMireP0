@@ -6,6 +6,7 @@ namespace helloworld
     {
         static void Main(string[] args)
         {
+            //Hi!
             Console.WriteLine("Hello World!");
 
             //Prompt user for age
