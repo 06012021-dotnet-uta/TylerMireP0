@@ -42,14 +42,27 @@ namespace RockPaperScissors1.RpsGame
 
                     //Determine winner and add to scoreboard
                     Result playerHumanResult = playerHuman.DetermineVictory(playerCPU.currentMove);
-                    playerRoundResults.Add(playerHumanResult);
+                    
 
                     //Print cpu result
                     Console.WriteLine($"CPU chose [{playerCPU.currentMove.ToString()}]");
                     Console.WriteLine($"You chose [{playerHuman.currentMove.ToString()}]");
 
-                    if(playerHuman.currentMove == playerCPU.currentMove)
-                        Console.WriteLine("--Draw! Play again!--");
+                    switch(playerHumanResult)
+                    {
+                        case Result.Win:
+                            Console.WriteLine("--You win the round!--");
+                            break;
+                        case Result.Lose:
+                            Console.WriteLine("--You lost the round!--");
+                            break;
+                        case Result.Tie:
+                            Console.WriteLine("--Draw! Play again!--");
+                            break;
+                    }
+
+                    if(playerHuman.currentMove != playerCPU.currentMove)
+                        playerRoundResults.Add(playerHumanResult);
 
                 }while(playerHuman.currentMove == playerCPU.currentMove);
 
@@ -57,7 +70,7 @@ namespace RockPaperScissors1.RpsGame
 
                 #region 
                 //Increment round if less than 3 and prompt user to end game if 3 rounds were completed
-                if(currentRound < 3) currentRound++;
+                if(currentRound < TOTAL_ROUNDS) currentRound++;
                 else
                 {
                     string playAgainResponse = "";
@@ -71,10 +84,10 @@ namespace RockPaperScissors1.RpsGame
 
                     //Prints win results into a table
                     #region 
-                    Console.WriteLine("Round\t1\t2\t3");
+                    Console.WriteLine("Round\t\t1\t2\t3");
 
-                    playerResults += playerHuman.name + "\t";
-                    cpuResults += "CPU\t";
+                    playerResults += playerHuman.name + "\t\t";
+                    cpuResults += "CPU\t\t";
 
                     for(int i = 0; i < playerRoundResults.Count; i++)
                     {
