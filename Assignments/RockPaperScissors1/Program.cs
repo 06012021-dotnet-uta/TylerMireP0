@@ -12,7 +12,7 @@ using System.Collections.Generic;
     X 7. Get Name from player and print to console for victory
     X 8. Track wins and print results screen 
 
-    --Also do the coding challange for this week--
+    --Also do the coding challanges for this week--
 */
 
 namespace RockPaperScissors1
@@ -26,13 +26,15 @@ namespace RockPaperScissors1
 
             while(successfulConversion == false)
             {
+                string playerChoice;
+
                 Console.WriteLine("\n------------------------------");
                 Console.WriteLine($"Round {round}");
                 Console.WriteLine("1-Rock, 2-Paper, 3-Scissors");
                 Console.WriteLine("------------------------------");
                 Console.Write("\nPlease enter choice: ");
 
-                string playerChoice = Console.ReadLine();
+                playerChoice = Console.ReadLine();
                 successfulConversion = int.TryParse(playerChoice, out playerChoiceInt);
 
                 //Check to see if input is within enum range
@@ -74,49 +76,25 @@ namespace RockPaperScissors1
             return playerWin;
         }
 
-        static void PrintResults(List<bool> playerWins, string playerName)
-        {
-            Console.WriteLine("Round\t1\t2\t3");
-
-            string playerResults = "";
-            string cpuResults = "";
-
-            playerResults += playerName + "\t";
-            cpuResults += "CPU\t";
-
-            for(int j = 0; j < playerWins.Count; j++)
-            {
-                if(playerWins[j] == true) playerResults += "Win\t";
-                else playerResults += "Lose\t";
-            }
-
-            for(int j = 0; j < playerWins.Count; j++)
-            {
-                if(playerWins[j] == false) cpuResults += "Win\t";
-                else cpuResults += "Lose\t";
-            }
-
-            Console.WriteLine(playerResults);
-            Console.WriteLine(cpuResults);
-        }
         static void Main(string[] args)
         {
-            List<bool> playerWins = new List<bool>();
-            Random rand = new Random();
-            int round = 1;
-            int playerWinTotal = 0;
-            bool gameIsRunning = true;
+            List<bool> playerWins = new List<bool>(); //Records wins for each round
+            Random rand = new Random(); //RNG
+            int round = 1; //Records current round
+            int playerWinTotal = 0; //Records total wins so winner can be determined
+            bool gameIsRunning = true; //Game loop flag
+            string playerName; //Player name
             
             Console.WriteLine("-----Welcome to rock-paper-scissors-----");
             Console.Write("\nPlease enter name: ");
-            string playerName = Console.ReadLine();
+            playerName = Console.ReadLine();
 
             
             while(gameIsRunning)
             {
                 //Get choices from player and CPU
                 RPSChoice playerChoice = GetUserChoice(round);
-                RPSChoice cpuChoice = (RPSChoice)rand.Next(0, 4);
+                RPSChoice cpuChoice = (RPSChoice)rand.Next(1, 4);
                 
                 //Rule out draw possibility
                 while(cpuChoice == playerChoice)
@@ -127,8 +105,8 @@ namespace RockPaperScissors1
                 }
 
                 //Print cpu result
-                Console.WriteLine($"CPU chose {cpuChoice}");
-                Console.WriteLine($"You chose {playerChoice}");
+                Console.WriteLine($"CPU chose [{cpuChoice.ToString()}]");
+                Console.WriteLine($"You chose [{playerChoice.ToString()}]");
 
                 //Determine if player wins
                 if(DoesPlayerWin(cpuChoice, playerChoice))
@@ -148,6 +126,8 @@ namespace RockPaperScissors1
                 else
                 {
                     string playAgainResponse = "";
+                    string playerResults = "";
+                    string cpuResults = "";
 
                     if(playerWinTotal > 1)
                         Console.WriteLine($"\n-----Congratulations! You won the game {playerName}!-----");
@@ -155,7 +135,27 @@ namespace RockPaperScissors1
                         Console.WriteLine($"\n-----You lost the game {playerName}!-----");
 
                     //Prints win results into a table
-                    PrintResults(playerWins, playerName);
+                    #region 
+                    Console.WriteLine("Round\t1\t2\t3");
+
+                    playerResults += playerName + "\t";
+                    cpuResults += "CPU\t";
+
+                    for(int j = 0; j < playerWins.Count; j++)
+                    {
+                        if(playerWins[j] == true) playerResults += "Win\t";
+                        else playerResults += "Lose\t";
+                    }
+
+                    for(int j = 0; j < playerWins.Count; j++)
+                    {
+                        if(playerWins[j] == false) cpuResults += "Win\t";
+                        else cpuResults += "Lose\t";
+                    }
+
+                    Console.WriteLine(playerResults);
+                    Console.WriteLine(cpuResults);
+                    #endregion
 
                     while(playAgainResponse != "y" && playAgainResponse != "n")
                     {
@@ -164,7 +164,11 @@ namespace RockPaperScissors1
                         playAgainResponse = Console.ReadLine();
                     }
 
-                    if(playAgainResponse == "y") round = 1;
+                    if(playAgainResponse == "y")
+                    {
+                        round = 1;
+                        playerWins.Clear();
+                    } 
                     else gameIsRunning = false;
                 }
             }
