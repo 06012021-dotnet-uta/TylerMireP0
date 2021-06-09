@@ -13,7 +13,7 @@ namespace RockPaperScissors1
 
             game.Init();
             game.Play();
-            game.Exit();            
+            game.Exit();
         }
     }
 }
