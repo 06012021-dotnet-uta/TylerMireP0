@@ -17,6 +17,7 @@ namespace Application.Location
             public async Task<int> Handle(Query request, CancellationToken ct)
             {
                 Console.WriteLine(request.itemName);
+                await Task.Delay(10);
                 return 10;
             }
         }
