@@ -1,6 +1,9 @@
-﻿using Application.Location;
-using MediatR;
+﻿using Application;
 using System;
+using Persistence;
+using System.Text;
+using Domain;
+using System.Collections.Generic;
 
 namespace ClientApp
 {
@@ -10,27 +13,33 @@ namespace ClientApp
             Welcome,
             Login,
             ChooseLocation,
+            ViewCart,
             ViewLocation,
             Checkout,
             Closed
         }
 
-        private StoreState storeState;
+        private readonly BusinessApplicaiton _businessApplicaiton;
 
-        private readonly IMediator mediator;
+        private Customer loggedInCustomer;
+        private Location selectedLocation;
+
+        private StoreState storeState;
 
         public string userData;
 
-        public Store(IMediator mediator)
+        public Store(BusinessApplicaiton businessApplicaiton)
         {
-            this.mediator = mediator;
+            loggedInCustomer = null;
+            selectedLocation = null;
             storeState = StoreState.Welcome;
+            _businessApplicaiton = businessApplicaiton;
         }
 
         private void welcome()
         {
             Console.WriteLine("---------------------------");
-            Console.WriteLine("Welcome To the stuff store!");
+            Console.WriteLine("Welcome To the store application!");
             Console.WriteLine("---------------------------");
             storeState = StoreState.Login;
         }
@@ -44,28 +53,35 @@ namespace ClientApp
                 Console.WriteLine("***************************");
 
                 Console.Write("Please login or register a new account (L - login / R - register / Q - quit): ");
-                userResponse = getFormattedUserInput();
+                userResponse = getMenuUserInput();
 
                 switch (userResponse)
                 {
                     case "L":
                         #region //Login code
-                        bool successfulLogin = true;
                         string usernamePrompt;
                         string passwordPrompt;
 
                         do
                         {
+                            string operationResponse;
+
                             Console.Write("Please enter username: ");
-                            usernamePrompt = getFormattedUserInput();
+                            usernamePrompt = getUserInput();
 
                             Console.Write("Please enter password: ");
-                            passwordPrompt = getFormattedUserInput();
+                            passwordPrompt = getUserInput();
 
                             //Place login user function here
-                            //successfulLogin = mediator.send(new User.Login()
+                            loggedInCustomer = _businessApplicaiton.LoginCustomer(usernamePrompt, passwordPrompt, out operationResponse);
+                            if(operationResponse.Length > 0)
+                            {
+                                Console.WriteLine(operationResponse);
+                            }
 
-                        } while (successfulLogin == false);
+                        } while (loggedInCustomer == null);
+
+                        Console.WriteLine($"Welcome back {loggedInCustomer.Username}");
 
                         storeState = StoreState.ChooseLocation;
 
@@ -76,33 +92,72 @@ namespace ClientApp
                         string registerUsername = "";
                         string registerPassword = "";
                         string registerPasswordConfirm = "";
-
-                        bool uniqueUsername = true;
+                        bool registrationSuccess;
 
                         do
                         {
+                            registrationSuccess = true;
+
+                            //Prompt user for new account info
                             Console.Write("Enter new account username: ");
-                            registerUsername = getFormattedUserInput();
-
-                            //Verify username is unique --> uniqueUsername = mediator.send(new UniqueUsername.Query(){username = registerUsername}
-
-                        } while (uniqueUsername != true);
-
-                        do
-                        {
+                            registerUsername = getUserInput();
                             Console.Write("Enter new account password: ");
-                            registerPassword = getFormattedUserInput();
+                            registerPassword = getUserInput();
                             Console.Write("Confirm new account password: ");
-                            registerPasswordConfirm = getFormattedUserInput();
+                            registerPasswordConfirm = getUserInput();
 
-                            if (registerPassword.Length < 1 || registerPassword != registerPasswordConfirm)
+                            if (registerPassword.Length < 5)
                             {
-                                Console.WriteLine("Invalid input.");
+                                Console.WriteLine("Invalid input. Password must be at least 5 characters.");
+                                registrationSuccess = false;
                             }
 
-                        } while (registerPassword != registerPasswordConfirm && registerPassword.Length > 0);
+                            if(registerPassword != registerPasswordConfirm)
+                            {
+                                Console.WriteLine("Invalid input. Passwords do not match");
+                                registrationSuccess = false;
+                            }
+
+                            if(registrationSuccess)
+                            {
+                                string operationResponse = "";
+                                registrationSuccess = _businessApplicaiton.RegisterCustomer(
+                                    new Customer { Username = registerUsername },
+                                    registerPassword,
+                                    out operationResponse
+                                );
+
+                                if (!registrationSuccess)
+                                    Console.WriteLine(operationResponse);
+
+                            }
+
+                        } while (!registrationSuccess);
+                        
 
                         storeState = StoreState.ChooseLocation;
+                        
+                        break;
+                        #endregion
+                    case "N":
+                        #region //Add location
+                        
+                        Console.Write("Enter new location: ");
+                        string newLocation = Console.ReadLine();
+
+                        //await mediator.Send(new Application.Locations.Add.Query{ locationName = newLocation});
+
+                        
+                        break;
+                    #endregion
+                    case "M":
+                        #region
+                        //var locations = await mediator.Send(new Application.Locations.List.Query());
+                        Console.WriteLine();
+
+                        
+
+                        
                         
                         break;
                         #endregion
@@ -117,23 +172,89 @@ namespace ClientApp
                         break;
                 }
 
+                
             }while(storeState == StoreState.Login);
         }
 
         private void chooseLocation()
         {
-            Console.WriteLine("Location chosen!");
-            storeState = StoreState.Closed;
+            string userSelection = "";
+
+            Console.WriteLine("\n***************************");
+            Console.WriteLine("       Locations/Cart");
+            Console.WriteLine("***************************");
+            List<Location> locations = _businessApplicaiton.GetLocationList();
+            if (locations.Count > 0)
+            {
+                for (int i = 0; i < locations.Count; i++)
+                {
+                    Console.WriteLine($"{i - 1} - {locations[i].LocationName}");
+                }
+            }
+            else
+            {
+                Console.WriteLine("No locations available.");
+            }
+
+            do 
+            {
+                bool selectionSuccess;
+                Console.Write("Please select location or enter 'c' to view your cart (q to quit): ");
+                userSelection = getMenuUserInput();
+
+                if(userSelection == "Q")
+                {
+                    storeState = StoreState.Closed;
+                }
+                else if(userSelection == "C")
+                {
+                    Console.WriteLine("CART GOES HERE");
+                    // storeState = StoreState.ViewCart;
+                }
+                else
+                {
+                    int index;
+                    selectionSuccess = int.TryParse(userSelection, out index) && index < locations.Count;
+                    if (selectionSuccess)
+                    {
+                        selectedLocation = _businessApplicaiton.GetLocation(index);
+                        Console.WriteLine(selectedLocation.LocationName);
+                    }
+                    else
+                    {
+                        Console.WriteLine("Invalid input.");
+                    }
+                }
+
+            
+            } while (selectedLocation == null && storeState != StoreState.Closed);
+        }
+
+        private void locationDetails()
+        {
+
         }
 
         //Grabs user input from console and formats for single letter responses
-        private string getFormattedUserInput()
+        private string getMenuUserInput()
         {
             string userResponse;
             userResponse = Console.ReadLine();
             if (userResponse != null)
             {
                 userResponse = userResponse.Trim().ToUpper();
+                return userResponse;
+            }
+            else return "";
+        }
+
+        private string getUserInput()
+        {
+            string userResponse;
+            userResponse = Console.ReadLine();
+            if (userResponse != null)
+            {
+                userResponse = userResponse.Trim();
                 return userResponse;
             }
             else return "";
@@ -152,6 +273,9 @@ namespace ClientApp
                         break;
                     case StoreState.ChooseLocation:
                         chooseLocation();
+                        break;
+                    case StoreState.ViewLocation:
+                        locationDetails();
                         break;
                 }
             }
