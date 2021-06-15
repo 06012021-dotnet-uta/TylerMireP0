@@ -17,7 +17,7 @@ namespace UnitTesting
         }
 
         [Fact]
-        public void RegisterCustomerTest()
+        public void LoginCustomerTest()
         {
 
         }

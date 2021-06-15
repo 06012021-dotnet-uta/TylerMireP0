@@ -1,10 +1,9 @@
-﻿using System;
+﻿
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Core.Services;
 using Persistence;
 using Microsoft.Extensions.Logging;
-using Microsoft.EntityFrameworkCore;
 
 namespace Core
 {
@@ -15,7 +14,7 @@ namespace Core
             var host = CreateHostBuilder(args).Build();
 
             //Runs the host
-            host.RunAsync();
+            host.Run();
         }
 
         private static IHostBuilder CreateHostBuilder(string[] args) {

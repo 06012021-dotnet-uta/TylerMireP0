@@ -5,7 +5,7 @@ using Persistence;
 
 namespace Application.Handler
 {
-    public class OrderHandler : BaseHandler, IHandler
+    internal class OrderHandler : BaseHandler, IHandler
     {
         public OrderHandler(DataContext context)
             : base(context)

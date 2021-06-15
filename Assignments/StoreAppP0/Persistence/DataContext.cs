@@ -1,7 +1,7 @@
 ﻿using System;
-using Domain;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Domain;
 
 #nullable disable
 
@@ -22,14 +22,13 @@ namespace Persistence
         public virtual DbSet<Location> Locations { get; set; }
         public virtual DbSet<LocationProductInventoryJunction> LocationProductInventoryJunctions { get; set; }
         public virtual DbSet<Order> Orders { get; set; }
-        public virtual DbSet<OrderProductInventoryJunction> OrderProductInventoryJunctions { get; set; }
         public virtual DbSet<Product> Products { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             if (!optionsBuilder.IsConfigured)
             {
-#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see http://go.microsoft.com/fwlink/?LinkId=723263.
+//#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see http://go.microsoft.com/fwlink/?LinkId=723263.
                 optionsBuilder.UseSqlServer("Server=localhost\\SQLEXPRESS;Database=P0DB;Trusted_Connection=True;");
             }
         }
@@ -109,20 +108,23 @@ namespace Persistence
 
             modelBuilder.Entity<LocationProductInventoryJunction>(entity =>
             {
-                entity.HasNoKey();
+                entity.HasKey(e => new { e.LocationId, e.ProductId })
+                    .HasName("Id");
 
                 entity.ToTable("LocationProductInventoryJunction");
 
                 entity.Property(e => e.ItemsPerOrder).HasDefaultValueSql("((1))");
 
                 entity.HasOne(d => d.Location)
-                    .WithMany()
+                    .WithMany(p => p.LocationProductInventoryJunctions)
                     .HasForeignKey(d => d.LocationId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK__LocationP__Locat__44FF419A");
 
                 entity.HasOne(d => d.Product)
-                    .WithMany()
+                    .WithMany(p => p.LocationProductInventoryJunctions)
                     .HasForeignKey(d => d.ProductId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK__LocationP__Produ__45F365D3");
             });
 
@@ -145,23 +147,12 @@ namespace Persistence
                     .WithMany(p => p.Orders)
                     .HasForeignKey(d => d.LocationId)
                     .HasConstraintName("FK__Orders__Location__412EB0B6");
-            });
-
-            modelBuilder.Entity<OrderProductInventoryJunction>(entity =>
-            {
-                entity.HasNoKey();
-
-                entity.ToTable("OrderProductInventoryJunction");
-
-                entity.HasOne(d => d.Order)
-                    .WithMany()
-                    .HasForeignKey(d => d.OrderId)
-                    .HasConstraintName("FK__OrderProd__Order__48CFD27E");
 
                 entity.HasOne(d => d.Product)
-                    .WithMany()
+                    .WithMany(p => p.Orders)
                     .HasForeignKey(d => d.ProductId)
-                    .HasConstraintName("FK__OrderProd__Produ__49C3F6B7");
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK__Orders__ProductI__01142BA1");
             });
 
             modelBuilder.Entity<Product>(entity =>

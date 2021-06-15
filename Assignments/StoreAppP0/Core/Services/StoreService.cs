@@ -4,6 +4,7 @@ using Persistence;
 using System.Threading;
 using System.Threading.Tasks;
 using Application;
+using System;
 
 namespace Core.Services
 {
@@ -12,10 +13,12 @@ namespace Core.Services
     {
         private Store store;
         private readonly IHostLifetime hostLifetime;
+        private readonly DataContext dataContext;
 
         public StoreService(IHostLifetime hostLifetime, DataContext dataContext)
         {
             this.hostLifetime = hostLifetime;
+            this.dataContext = dataContext;
             BusinessApplicaiton businessApplication = new BusinessApplicaiton(dataContext);
             store = new Store(businessApplication);
         }
@@ -23,12 +26,13 @@ namespace Core.Services
         public Task StartAsync(CancellationToken ct)
         {
             store.Run();
+            
             return hostLifetime.StopAsync(ct);
         }
 
         public Task StopAsync(CancellationToken ct)
         {
-            //Put a save changes to db function here maybe? Dunno if it would be async
+            dataContext.Dispose();
             return Task.CompletedTask;
         }
     }

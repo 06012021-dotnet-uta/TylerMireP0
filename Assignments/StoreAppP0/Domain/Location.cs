@@ -9,6 +9,7 @@ namespace Domain
     {
         public Location()
         {
+            LocationProductInventoryJunctions = new HashSet<LocationProductInventoryJunction>();
             Orders = new HashSet<Order>();
         }
 
@@ -19,6 +20,7 @@ namespace Domain
         public string AddressState { get; set; }
         public string PhoneNumber { get; set; }
 
+        public virtual ICollection<LocationProductInventoryJunction> LocationProductInventoryJunctions { get; set; }
         public virtual ICollection<Order> Orders { get; set; }
     }
 }

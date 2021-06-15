@@ -9,7 +9,6 @@ namespace Application.Handler
     {
         bool Create<T>(T obj);
         T Read<T>(Guid id);
-        
         bool Update<T>(T obj, Guid id);
         bool Delete<T>(Guid id);
     }

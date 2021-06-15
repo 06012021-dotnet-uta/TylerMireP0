@@ -6,7 +6,7 @@ using Persistence;
 
 namespace Application.Handler
 {
-    public class LocationHandler : BaseHandler, IHandler
+    internal class LocationHandler : BaseHandler, IHandler
     {
 
         public LocationHandler(DataContext context)
@@ -16,28 +16,40 @@ namespace Application.Handler
 
         public bool Create(Location newLocation)
         {
-            return base.Create<Location>(newLocation);
+            return Create<Location>(newLocation);
         }
 
         public Location Read(Guid id)
         {
-            return base.Read<Location>(id);
+            return Read<Location>(id);
         }
 
         public bool Update(Location newLocation)
         {
-            return base.Update<Location>(newLocation, newLocation.LocationId);
+            return Update<Location>(newLocation, newLocation.LocationId);
         }
 
         public bool Delete(Guid id)
         {
-            return base.Delete<Location>(id);
+            return Delete<Location>(id);
         }
 
         public List<Location> List()
         {
             List<Location> locations = _context.Locations.ToList();
             return locations;
+        }
+
+        public List<LocationProductInventoryJunction> ListLocationInventory(Guid locationId)
+        {
+            List<LocationProductInventoryJunction> locationProductInventoryJunctions = _context.LocationProductInventoryJunctions.ToList();
+
+            IEnumerable<LocationProductInventoryJunction> locationInventory =
+                from inventory in locationProductInventoryJunctions
+                where inventory.LocationId == locationId
+                select inventory;
+
+            return locationInventory.ToList();
         }
     }
 }

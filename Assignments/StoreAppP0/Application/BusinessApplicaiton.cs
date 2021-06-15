@@ -11,19 +11,20 @@ namespace Application
     {
         private readonly LocationHandler _locationHandler;
         private readonly CustomerHandler _customerHandler;
+        private readonly ProductHandler _productHandler;
         private readonly DataContext _context;
 
         public BusinessApplicaiton(DataContext context)
         {
-            _context = context;
             _locationHandler = new LocationHandler(context);
             _customerHandler = new CustomerHandler(context);
+            _productHandler = new ProductHandler(context);
+            _context = context;
         }
 
         #region //Customer login/register
         public bool RegisterCustomer(Customer customer, string password, out string response)
         {
-            bool creationSuccess = false;
             response = "";
 
             //Add password hash to customer
@@ -41,7 +42,7 @@ namespace Application
             }
 
             try{
-                creationSuccess = _customerHandler.Create(customer);
+                _customerHandler.Create(customer);
                 return true;
             }
             catch(Exception e)
@@ -67,7 +68,9 @@ namespace Application
             {
                 if(c.Username == username)
                 {
-                    if (GetPasswordHash(password).ToString() == c.PasswordHash.ToString())
+                    string passwordHashA = BitConverter.ToString(GetPasswordHash(password));
+                    string passwordHashB = BitConverter.ToString(c.PasswordHash).Substring(0, passwordHashA.Length);
+                    if ( passwordHashA == passwordHashB)
                     {
                         return c;
                     }
@@ -91,25 +94,35 @@ namespace Application
 
         public Location GetLocation(int locationIndex)
         {
-            if (locationIndex < _locationHandler.List().Count)
+            if (locationIndex < _locationHandler.List().Count && locationIndex >= 0)
                 return _locationHandler.List()[locationIndex];
             else
                 return null;
         }
 
-        public List<Product> GetLocationProductList(Location location)
+        public List<LocationProductInventoryJunction> GetLocationProductList(Location location)
         {
-            return new List<Product>();
+            List<LocationProductInventoryJunction> locationProductInventories =
+                _locationHandler.ListLocationInventory(location.LocationId);
+
+            return locationProductInventories;
         }
 
-        public Product GetLocationProduct(Location location, int itemIndex)
+        public Product GetProductDetails(Guid? productId)
         {
-            return new Product();
+            if (productId != null)
+            {
+                return _productHandler.Read((Guid)productId);
+            }
+            else
+                return null;
         }
 
-        public Order GetOrder(Location location, Product product, int count)
+        public bool Checkout(List<Order> orders)
         {
-            return new Order();
+            _context.AddRange(orders);
+            bool success = _context.SaveChanges() > 0;
+            return success;
         }
     }
 }

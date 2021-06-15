@@ -7,8 +7,8 @@ namespace Domain
 {
     public partial class LocationProductInventoryJunction
     {
-        public Guid? LocationId { get; set; }
-        public Guid? ProductId { get; set; }
+        public Guid LocationId { get; set; }
+        public Guid ProductId { get; set; }
         public double? SaleDiscount { get; set; }
         public int? ItemsPerOrder { get; set; }
         public int? TotalItems { get; set; }

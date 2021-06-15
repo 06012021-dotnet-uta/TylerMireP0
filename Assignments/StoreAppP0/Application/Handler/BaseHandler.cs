@@ -1,9 +1,8 @@
-using System.Collections.Generic;
 using Persistence;
 using System;
 
 namespace Application.Handler{
-    public abstract class BaseHandler : IHandler
+    internal abstract class BaseHandler
     {
         protected readonly DataContext _context;
 
