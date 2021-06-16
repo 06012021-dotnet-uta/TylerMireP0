@@ -17,6 +17,7 @@ namespace ClientApp
             ViewLocation,
             OrderOptions,
             EditCartOrder,
+            OrderHistory,
             Checkout,
             Closed
         }
@@ -90,7 +91,13 @@ namespace ClientApp
 
                         Console.WriteLine($"\nWelcome back {loggedInCustomer.Username}");
 
-                        storeState = StoreState.ChooseLocation;
+                        if (loggedInCustomer.DefaultLocationId != null)
+                        {
+                            selectedLocation = _businessApplicaiton.GetLocation((Guid)loggedInCustomer.DefaultLocationId);
+                            storeState = StoreState.ViewLocation;
+                        }
+                        else
+                            storeState = StoreState.ChooseLocation;
 
                         break;
                     #endregion
@@ -164,7 +171,7 @@ namespace ClientApp
             string userSelection = "";
 
             Console.WriteLine("\n***************************");
-            Console.WriteLine("       Locations/Cart");
+            Console.WriteLine("   Locations/Cart/History");
             Console.WriteLine("***************************");
             List<Location> locations = _businessApplicaiton.GetLocationList();
             if (locations.Count > 0)
@@ -182,7 +189,7 @@ namespace ClientApp
             do 
             {
                 
-                Console.Write("\nPlease select location (Q - quit / C - view cart / L - logout): ");
+                Console.Write("\nPlease select location (Q - quit / C - view cart / H - order history / L - logout): ");
                 userSelection = getMenuUserInput();
 
                 switch (userSelection)
@@ -192,6 +199,9 @@ namespace ClientApp
                         break;
                     case "C":
                         storeState = StoreState.ViewCart;
+                        break;
+                    case "H":
+                        storeState = StoreState.OrderHistory;
                         break;
                     case "L":
                         loggedInCustomer = null;
@@ -215,6 +225,31 @@ namespace ClientApp
             } while (storeState == StoreState.ChooseLocation);
         }
 
+        private void orderHistory()
+        {
+            List<Order> customerOrders = _businessApplicaiton.GetCustomerHistory(loggedInCustomer.CustomerId);
+            foreach(Order o in customerOrders)
+            {
+                Product p = _businessApplicaiton.GetProductDetails(o.ProductId);
+                Console.WriteLine("------------------------------------");
+                Console.WriteLine($"Order item: {p.ProductName}");
+                Console.WriteLine($"Description: {p.ProductDescription}");
+                Console.WriteLine($"Total items ordered: {selectedLocationProductDetails.TotalItems}");
+                Console.WriteLine($"Total items cost: {o.Total}");
+                Console.WriteLine($"Order Date: {o.OrderCreationDate}");
+            }
+            
+            do
+            {
+                Console.Write("Enter B to go back: ");
+                string userInput = getMenuUserInput();
+                if (userInput == "B")
+                    storeState = StoreState.ChooseLocation;
+                else
+                    Console.WriteLine("Invalid input.");
+            } while (storeState == StoreState.OrderHistory);
+        }
+
         //Print location inventory and prompt user for selection
         private void locationDetails()
         {
@@ -222,7 +257,7 @@ namespace ClientApp
             Console.WriteLine($"\n********{selectedLocation.LocationName} Inventory********\n");
             
             List<LocationProductInventoryJunction> locationInventory =
-                _businessApplicaiton.GetLocationProductList(selectedLocation);
+                _businessApplicaiton.GetLocationProductList(selectedLocation.LocationId);
 
             for(int i = 0; i < locationInventory.Count; i++)
             {
@@ -234,7 +269,7 @@ namespace ClientApp
 
             do
             {
-                Console.Write("Select a product (b to go back):");
+                Console.Write("Select a product or D to make this location your default (b to go back):");
                 string userResponse = getMenuUserInput();
 
                 switch (userResponse)
@@ -244,6 +279,10 @@ namespace ClientApp
                         break;
                     case "Q":
                         storeState = StoreState.Closed;
+                        break;
+                    case "D":
+                        loggedInCustomer.DefaultLocationId = selectedLocation.LocationId;
+                        Console.WriteLine($"\n{selectedLocation.LocationName} is now your default.\n");
                         break;
                     default:
                         bool selectionSuccess;
@@ -336,7 +375,7 @@ namespace ClientApp
             do
             {
                 string userResponse;
-                Console.WriteLine("\n Enter item number to edit or press C to checkout (Q - quit / B - Back):");
+                Console.Write("\n Enter item number to edit or press C to checkout (Q - quit / B - Back): ");
                 userResponse = getMenuUserInput();
 
                 switch (userResponse)
@@ -354,11 +393,12 @@ namespace ClientApp
                         bool selectionSuccess;
                         int index;
                         selectionSuccess = int.TryParse(userResponse, out index) &&
-                            (index < cart.Count && index > 0);
+                            (index < cart.Count && index >= 0);
 
                         if(selectionSuccess)
                         {
                             selectedOrder = cart[index];
+                            selectedLocation = _businessApplicaiton.GetLocation((Guid)selectedOrder.LocationId);
                             storeState = StoreState.EditCartOrder;
                         }
                         else
@@ -374,13 +414,66 @@ namespace ClientApp
 
         private void editCartOrder()
         {
-            Console.WriteLine("\n");
-            //Add options to edit selected order here
-        }
+            selectedProduct = _businessApplicaiton.GetProductDetails(selectedOrder.ProductId);
+            selectedLocation = _businessApplicaiton.GetLocation((Guid)selectedOrder.LocationId);
+            selectedLocationProductDetails = _businessApplicaiton.GetLocationProductDetails(selectedLocation.LocationId, selectedProduct.ProductId);
 
-        private void viewOrderHistory()
-        {
-            //Put code here to list all past orders
+            Console.WriteLine("------------------------------------");
+            Console.WriteLine($"Selection: {selectedProduct.ProductName}");
+            Console.WriteLine($"Description: {selectedProduct.ProductDescription}");
+            Console.WriteLine($"Location: {selectedLocation.LocationName}");
+            Console.WriteLine($"Orders: {selectedOrder.TotalItems / selectedLocationProductDetails.ItemsPerOrder}");
+            Console.WriteLine($"Total items ordered: {selectedOrder.TotalItems}");
+            Console.WriteLine($"Total: ${selectedLocationProductDetails.ItemsPerOrder}");
+            
+            //Add item edit options here
+            do
+            {
+                string userResponse;
+                Console.WriteLine("Enter C to change order count or D to delete order (B - Back): ");
+                userResponse = getMenuUserInput();
+
+                switch (userResponse)
+                {
+                    case "C":
+                        Console.Write("Enter updated amount: ");
+                        userResponse = getUserInput();
+
+                        bool selectionSuccess;
+                        int updatedCount;
+                        int orderLocationItemSum = (int)(selectedOrder.TotalItems + selectedLocationProductDetails.TotalItems);
+                        
+                        selectionSuccess = int.TryParse(userResponse, out updatedCount) &&
+                            (updatedCount * selectedLocationProductDetails.ItemsPerOrder < orderLocationItemSum 
+                                && updatedCount >= 0);
+
+                        if (selectionSuccess)
+                        {
+                            //Get new order item count
+                            int newOrderItemCount = (int)(updatedCount * selectedLocationProductDetails.ItemsPerOrder);
+                            //put the remainder in the store inventory total
+                            selectedLocationProductDetails.TotalItems = orderLocationItemSum - newOrderItemCount;
+
+                            selectedOrder.TotalItems = newOrderItemCount;
+                        }
+                        else
+                            Console.WriteLine("Invalid input.");
+
+                        break;
+                    case "D":
+                        cart.Remove(selectedOrder);
+                        selectedLocationProductDetails.TotalItems += selectedOrder.TotalItems;
+                        storeState = StoreState.ViewCart;
+                        break;
+                    case "B":
+                        storeState = StoreState.ViewCart;
+                        break;
+                    default:
+                        Console.WriteLine("Invalid input.");
+                        break;
+                }
+                selectedOrder = null;
+            } while (storeState == StoreState.EditCartOrder);
         }
 
         private void checkout()
@@ -446,11 +539,21 @@ namespace ClientApp
                     case StoreState.EditCartOrder:
                         editCartOrder();
                         break;
+                    case StoreState.OrderHistory:
+                        orderHistory();
+                        break;
                     default:
                         throw new NotImplementedException();
                         //break;
                 }
             }
+
+            //Cleanup for quick quit
+            selectedLocation = null;
+            selectedProduct = null;
+            selectedLocationProductDetails = null;
+            cart = null;
+            selectedOrder = null;
         }
 
     }

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Domain;
 using Persistence;
 
@@ -51,6 +52,11 @@ namespace Application.Handler
         public bool Delete(Guid id)
         {
             return base.Delete<Order>(id);
+        }
+
+        public List<Order> List()
+        {
+            return _context.Orders.ToList();
         }
 
         
