@@ -5,20 +5,18 @@ using System.Collections.Generic;
 
 namespace Domain
 {
-    public partial class Location
+    public partial class Product
     {
-        public Location()
+        public Product()
         {
             LocationProductInventoryJunctions = new HashSet<LocationProductInventoryJunction>();
             Orders = new HashSet<Order>();
         }
 
-        public Guid LocationId { get; set; }
-        public string LocationName { get; set; }
-        public string AddressStreet { get; set; }
-        public string AddressCity { get; set; }
-        public string AddressState { get; set; }
-        public string PhoneNumber { get; set; }
+        public Guid ProductId { get; set; }
+        public string ProductName { get; set; }
+        public string ProductDescription { get; set; }
+        public double? ProductPrice { get; set; }
 
         public virtual ICollection<LocationProductInventoryJunction> LocationProductInventoryJunctions { get; set; }
         public virtual ICollection<Order> Orders { get; set; }
