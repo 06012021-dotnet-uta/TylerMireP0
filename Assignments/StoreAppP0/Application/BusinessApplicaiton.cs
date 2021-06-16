@@ -195,6 +195,11 @@ namespace Application
         /// <returns>Bool on success status</returns>
         public bool Checkout(List<Order> orders)
         {
+            foreach(Order o in orders)
+            {
+                o.LastOrderDate = DateTime.Now;
+                o.OrderCreationDate = DateTime.Now;
+            }
             _context.AddRange(orders);
             bool success = _context.SaveChanges() > 0;
             return success;

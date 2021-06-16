@@ -210,7 +210,7 @@ namespace ClientApp
                     default:
                         bool selectionSuccess;
                         int index;
-                        selectionSuccess = int.TryParse(userSelection, out index) && (index < locations.Count && index >= 0);
+                        selectionSuccess = int.TryParse(userSelection, out index) && (index < locations.Count + 1 && index > 0);
                         if (selectionSuccess)
                         {
                             index -= 1;
@@ -228,26 +228,34 @@ namespace ClientApp
         private void orderHistory()
         {
             List<Order> customerOrders = _businessApplicaiton.GetCustomerHistory(loggedInCustomer.CustomerId);
-            foreach(Order o in customerOrders)
+            if (customerOrders != null)
             {
-                Product p = _businessApplicaiton.GetProductDetails(o.ProductId);
-                Console.WriteLine("------------------------------------");
-                Console.WriteLine($"Order item: {p.ProductName}");
-                Console.WriteLine($"Description: {p.ProductDescription}");
-                Console.WriteLine($"Total items ordered: {selectedLocationProductDetails.TotalItems}");
-                Console.WriteLine($"Total items cost: {o.Total}");
-                Console.WriteLine($"Order Date: {o.OrderCreationDate}");
+                foreach (Order o in customerOrders)
+                {
+                    Product p = _businessApplicaiton.GetProductDetails(o.ProductId);
+                    Console.WriteLine("------------------------------------");
+                    Console.WriteLine($"Order item: {p.ProductName}");
+                    Console.WriteLine($"Description: {p.ProductDescription}");
+                    Console.WriteLine($"Total items ordered: {o.TotalItems}");
+                    Console.WriteLine($"Total items cost: ${MathF.Round((float)o.Total, 2)}");
+                    Console.WriteLine($"Order Date: {o.OrderCreationDate}");
+                }
+
+                do
+                {
+                    Console.Write("Enter B to go back: ");
+                    string userInput = getMenuUserInput();
+                    if (userInput == "B")
+                        storeState = StoreState.ChooseLocation;
+                    else
+                        Console.WriteLine("Invalid input.");
+                } while (storeState == StoreState.OrderHistory);
             }
-            
-            do
+            else
             {
-                Console.Write("Enter B to go back: ");
-                string userInput = getMenuUserInput();
-                if (userInput == "B")
-                    storeState = StoreState.ChooseLocation;
-                else
-                    Console.WriteLine("Invalid input.");
-            } while (storeState == StoreState.OrderHistory);
+                Console.WriteLine("No order history.");
+                storeState = StoreState.ChooseLocation;
+            }
         }
 
         //Print location inventory and prompt user for selection
@@ -263,8 +271,11 @@ namespace ClientApp
             {
                 Product product = _businessApplicaiton.GetProductDetails(locationInventory[i].ProductId);
                 Console.WriteLine($"{i + 1} - ({product.ProductName}) \n" +
-                                  $"    Description: {product.ProductDescription}\n" +  
-                                  $"    Count: {locationInventory[i].TotalItems}\n");
+                                  $"    Description: {product.ProductDescription}");
+                if (locationInventory[i].TotalItems == 0)
+                    Console.WriteLine("    Count: (Out of stock)\n");
+                else
+                    Console.WriteLine($"    Count: {locationInventory[i].TotalItems}\n");
             }
 
             do
@@ -287,7 +298,7 @@ namespace ClientApp
                     default:
                         bool selectionSuccess;
                         int index;
-                        selectionSuccess = int.TryParse(userResponse, out index) && (index < locationInventory.Count && index >= 0);
+                        selectionSuccess = int.TryParse(userResponse, out index) && (index < locationInventory.Count + 1 && index > 0);
                         if (selectionSuccess)
                         {
                             index -= 1;
@@ -309,6 +320,7 @@ namespace ClientApp
             Console.WriteLine($"Description: {selectedProduct.ProductDescription}");
             Console.WriteLine($"Inventory: {selectedLocationProductDetails.TotalItems}");
             Console.WriteLine($"Items per order: {selectedLocationProductDetails.ItemsPerOrder}");
+            Console.WriteLine($"Item price: ${MathF.Round((float)selectedProduct.ProductPrice, 2)}");
             do
             {
                 Console.Write("\nEnter order amount (b to go back / q to quit): ");
@@ -329,7 +341,7 @@ namespace ClientApp
                             (count <= selectedLocationProductDetails.TotalItems && count > 0);
                         if (selectionSuccess)
                         {
-                            if(count * selectedLocationProductDetails.ItemsPerOrder < selectedLocationProductDetails.TotalItems)
+                            if(count * selectedLocationProductDetails.ItemsPerOrder <= selectedLocationProductDetails.TotalItems)
                             {
                                 int totalItemsOrdered = (int)(count * selectedLocationProductDetails.ItemsPerOrder);
                                 cart.Add(new Order
@@ -369,7 +381,7 @@ namespace ClientApp
             for(int i = 0; i < cart.Count; i++)
             {
                 Order o = cart[i];
-                Console.WriteLine($"{i} - {o.Product.ProductName} - {o.Location.LocationName} - {o.TotalItems} - {MathF.Round((float)o.Total, 2)}");
+                Console.WriteLine($"{i + 1} - {o.Product.ProductName} - {o.Location.LocationName} - {o.TotalItems} - ${MathF.Round((float)o.Total, 2)}");
             }
 
             do
@@ -393,10 +405,11 @@ namespace ClientApp
                         bool selectionSuccess;
                         int index;
                         selectionSuccess = int.TryParse(userResponse, out index) &&
-                            (index < cart.Count && index >= 0);
+                            (index < cart.Count + 1 && index > 0);
 
                         if(selectionSuccess)
                         {
+                            index -= 1;
                             selectedOrder = cart[index];
                             selectedLocation = _businessApplicaiton.GetLocation((Guid)selectedOrder.LocationId);
                             storeState = StoreState.EditCartOrder;
