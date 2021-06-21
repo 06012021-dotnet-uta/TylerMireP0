@@ -11,16 +11,24 @@ namespace UnitTesting
 {
     public class UnitTest1
     {
+
+        
+        
+        DbContextOptions<DataContext> options;
+
+        public UnitTest1()
+        {
+            options = new DbContextOptionsBuilder<DataContext>()
+                .UseInMemoryDatabase(databaseName: "RegisterCustomerTest")
+                .Options;
+        }
+
         [Fact]
         public void RegisterCustomerTest()
         {
-            //Arrange
-            var options = new DbContextOptionsBuilder<DataContext>()
-                .UseInMemoryDatabase(databaseName: "RegisterCustomerTest")
-                .Options;
-
             using(var context = new DataContext(options))
             {
+                //Arrange
                 var businessApplication = new BusinessApplicaiton(context);
                 var newCustomer = new Customer
                 {

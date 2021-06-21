@@ -48,7 +48,7 @@ namespace ClientApp
         private void welcome()
         {
             Console.WriteLine("---------------------------");
-            Console.WriteLine("Welcome To the store application!");
+            Console.WriteLine("Welcome To the grocery store application!");
             Console.WriteLine("---------------------------");
             storeState = StoreState.Login;
         }
