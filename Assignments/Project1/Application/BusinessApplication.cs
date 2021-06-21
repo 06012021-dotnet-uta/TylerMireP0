@@ -2,12 +2,12 @@
 using Application.Handler;
 using System.Collections.Generic;
 using System;
-using Domain;
 using System.Text;
+using Domain;
 
 namespace Application
 {
-    public class BusinessApplicaiton
+    public class BusinessApplication
     {
         private readonly LocationHandler _locationHandler;
         private readonly CustomerHandler _customerHandler;
@@ -15,7 +15,7 @@ namespace Application
         private readonly OrderHandler _orderHandler;
         private readonly DataContext _context;
 
-        public BusinessApplicaiton(DataContext context)
+        public BusinessApplication(DataContext context)
         {
             _locationHandler = new LocationHandler(context);
             _customerHandler = new CustomerHandler(context);
@@ -137,7 +137,7 @@ namespace Application
         {
             foreach(Location l in GetLocationList())
             {
-                if (l.LocationId == locationId) 
+                if (l.Id == locationId) 
                     return l;
             }
             return null;
@@ -149,9 +149,9 @@ namespace Application
         /// <param name="locationId">Location id to search by</param>
         /// <param name="productId">product id to search by</param>
         /// <returns>Location product inventory junction object that matches the specified location product id. Null if nothing is found</returns>
-        public LocationProductInventoryJunction GetLocationProductDetails(Guid locationId, Guid productId)
+        public LocationProductInfo GetLocationProductDetails(Guid locationId, Guid productId)
         {
-            foreach(LocationProductInventoryJunction l in GetLocationProductList(locationId))
+            foreach(LocationProductInfo l in GetLocationProductList(locationId))
             {
                 if (l.ProductId == productId)
                     return l;
@@ -165,9 +165,9 @@ namespace Application
         /// </summary>
         /// <param name="locationId">Location id to search by </param>
         /// <returns>List of location product inventory junctions. Null if nothing is found</returns>
-        public List<LocationProductInventoryJunction> GetLocationProductList(Guid locationId)
+        public List<LocationProductInfo> GetLocationProductList(Guid locationId)
         {
-            List<LocationProductInventoryJunction> locationProductInventories =
+            List<LocationProductInfo> locationProductInventories =
                 _locationHandler.ListLocationInventory(locationId);
 
             return locationProductInventories;
